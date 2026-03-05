@@ -1,6 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dmvheatpumps.com"),
@@ -10,9 +16,7 @@ export const metadata: Metadata = {
   },
   description:
     "Find heat pump rebates by address + utility and estimate the right system size. Follow the correct sequence: measure → seal → test → insulate → install.",
-  alternates: {
-    canonical: "/"
-  },
+  alternates: { canonical: "/" },
   robots: {
     index: true,
     follow: true,
@@ -42,7 +46,7 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
@@ -68,23 +72,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             })
           }}
         />
+
         <div className="shell">
           <header className="topbar">
             <Link className="brand" href="/">
               DMV Heat Pumps
             </Link>
             <nav className="nav">
-              <Link href="/calculators">Calculators</Link>
-              <Link href="/widget">Widget</Link>
-              <Link href="/docs">API Docs</Link>
+              <Link href="/heat-pump-rebates-dmv">Rebates</Link>
+              <Link href="/heat-pump-sizing-guide">Sizing guide</Link>
+              <Link href="/calculators">Tools</Link>
             </nav>
           </header>
           <main className="main">{children}</main>
           <footer className="footer">
             <div className="footerInner">
               <span>© {new Date().getFullYear()} DMV Heat Pumps</span>
-              <span className="muted">
-                Estimates only. Verify eligibility and contractor bids before purchasing.
+              <span className="muted" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <Link href="/docs">API Docs</Link>
+                <span>•</span>
+                <span>Estimates only. Verify eligibility and contractor bids before purchasing.</span>
               </span>
             </div>
           </footer>
@@ -93,4 +100,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-

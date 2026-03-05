@@ -118,7 +118,7 @@ export default function CalculatorsPage() {
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel" id="sizing">
         <h2 style={{ margin: "0 0 10px", letterSpacing: "-0.3px" }}>1) Quick sizing (tons)</h2>
         <form
           className="form"
@@ -190,7 +190,7 @@ export default function CalculatorsPage() {
         </form>
       </section>
 
-      <section className="panel">
+      <section className="panel" id="savings">
         <h2 style={{ margin: "0 0 10px", letterSpacing: "-0.3px" }}>2) Annual savings + payback</h2>
         <form
           className="form"
@@ -280,7 +280,7 @@ export default function CalculatorsPage() {
         </form>
       </section>
 
-      <section className="panel">
+      <section className="panel" id="incentives">
         <h2 style={{ margin: "0 0 10px", letterSpacing: "-0.3px" }}>3) Incentives (utility + active programs)</h2>
         <p className="muted" style={{ marginTop: 0 }}>
           This calls <span className="mono">GET /api/incentives</span> and pulls rows from{" "}

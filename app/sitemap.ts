@@ -3,6 +3,20 @@ import type { MetadataRoute } from "next";
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://dmvheatpumps.com";
   const now = new Date();
-  return [{ url: `${base}/`, lastModified: now, changeFrequency: "weekly", priority: 1 }];
+  return [
+    { url: `${base}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
+    {
+      url: `${base}/heat-pump-rebates-dmv`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8
+    },
+    {
+      url: `${base}/heat-pump-sizing-guide`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8
+    }
+  ];
 }
 
