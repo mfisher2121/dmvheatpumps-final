@@ -1,0 +1,14 @@
+{
+  "name": "dmv-heatpumps-openapi",
+  "description": "Template MCP server config for DMV Heat Pumps using the project's OpenAPI spec.",
+  "openapi": {
+    "url": "http://localhost:3000/api/openapi"
+  },
+  "auth": {
+    "type": "none"
+  },
+  "tools": {
+    "includeOperationIds": ["health", "calcSizing", "calcSavings", "calcRebates", "createLead", "getOpenApi"]
+  }
+}
+

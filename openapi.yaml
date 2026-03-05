@@ -1,0 +1,240 @@
+openapi: 3.1.0
+info:
+  title: DMV Heat Pumps API
+  version: 0.1.0
+  description: >
+    API for sizing, savings, rebates, and optional lead capture for the DMV Heat Pumps site/widget.
+servers:
+  - url: https://example.com
+    description: Replace with your deployment base URL
+paths:
+  /api/health:
+    get:
+      operationId: health
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, service, time]
+                properties:
+                  ok: { type: boolean }
+                  service: { type: string }
+                  time: { type: string, format: date-time }
+
+  /api/calc/sizing:
+    post:
+      operationId: calcSizing
+      summary: Quick sizing (design load + tons)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SizingRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SizingResponse" }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+
+  /api/calc/savings:
+    post:
+      operationId: calcSavings
+      summary: Annual savings + payback estimate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SavingsRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SavingsResponse" }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+
+  /api/calc/rebates:
+    post:
+      operationId: calcRebates
+      summary: Rebate estimate (placeholder rules)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RebateRequest" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RebateResponse" }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+
+  /api/leads:
+    post:
+      operationId: createLead
+      summary: Capture a lead (optionally stored in Supabase)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Lead" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  stored: { type: boolean }
+                  leadId: { type: string, nullable: true }
+                  message: { type: string }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiError" }
+
+  /api/openapi:
+    get:
+      operationId: getOpenApi
+      summary: Download OpenAPI YAML
+      responses:
+        "200":
+          description: OK
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+components:
+  schemas:
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        details: {}
+
+    ClimateZone:
+      type: string
+      enum: ["DMV"]
+
+    SizingRequest:
+      type: object
+      required: [climateZone, conditionedSqft]
+      properties:
+        climateZone: { $ref: "#/components/schemas/ClimateZone" }
+        conditionedSqft: { type: number, minimum: 200, maximum: 20000 }
+        insulation:
+          type: string
+          enum: ["poor", "average", "good"]
+          default: "average"
+        airSealing:
+          type: string
+          enum: ["leaky", "average", "tight"]
+          default: "average"
+        stories:
+          type: integer
+          minimum: 1
+          maximum: 4
+          default: 2
+
+    SizingResponse:
+      type: object
+      required: [estimatedDesignLoadBtuH, recommendedCapacityTons, notes]
+      properties:
+        estimatedDesignLoadBtuH: { type: number }
+        recommendedCapacityTons: { type: number }
+        notes:
+          type: array
+          items: { type: string }
+
+    SavingsRequest:
+      type: object
+      required: [climateZone, currentFuel, annualHeatingCostUsd]
+      properties:
+        climateZone: { $ref: "#/components/schemas/ClimateZone" }
+        currentFuel:
+          type: string
+          enum: ["gas", "oil", "propane", "electric_resistance"]
+        annualHeatingCostUsd: { type: number, minimum: 0, maximum: 25000 }
+        annualCoolingCostUsd: { type: number, minimum: 0, maximum: 25000, default: 0 }
+        electricityRateUsdPerKwh: { type: number, minimum: 0.05, maximum: 0.8, default: 0.18 }
+        heatPumpCopSeasonal: { type: number, minimum: 1.5, maximum: 4.5, default: 3.0 }
+        installCostUsd: { type: number, minimum: 0, maximum: 80000, default: 15000 }
+        rebateUsd: { type: number, minimum: 0, maximum: 30000, default: 0 }
+
+    SavingsResponse:
+      type: object
+      required: [estimatedAnnualCostAfterUsd, estimatedAnnualSavingsUsd, simplePaybackYears, assumptions]
+      properties:
+        estimatedAnnualCostAfterUsd: { type: number }
+        estimatedAnnualSavingsUsd: { type: number }
+        simplePaybackYears: { type: number, nullable: true }
+        assumptions:
+          type: object
+          additionalProperties: true
+
+    RebateRequest:
+      type: object
+      required: [state, householdIncomeUsd]
+      properties:
+        state:
+          type: string
+          enum: ["DC", "MD", "VA"]
+        householdIncomeUsd: { type: number, minimum: 0, maximum: 1000000 }
+        hasExistingCentralAc: { type: boolean, default: false }
+
+    RebateResponse:
+      type: object
+      required: [estimatedRebateUsd, programs, disclaimer]
+      properties:
+        estimatedRebateUsd: { type: number }
+        programs:
+          type: array
+          items:
+            type: object
+            required: [name, amountUsd]
+            properties:
+              name: { type: string }
+              amountUsd: { type: number }
+              notes: { type: string }
+        disclaimer: { type: string }
+
+    Lead:
+      type: object
+      required: [name, email, zip]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        email: { type: string, format: email, maxLength: 254 }
+        phone: { type: string, minLength: 7, maxLength: 40 }
+        zip: { type: string, minLength: 5, maxLength: 10 }
+        message: { type: string, maxLength: 2000 }
+        source: { type: string, maxLength: 200 }
+
