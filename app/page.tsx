@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Rebates + Right-Size Heat Pump Calculator",
+  description:
+    "Incentive Stack Finder by address + utility, plus a right-size calculator. Avoid oversizing and maximize rebates."
+};
+
 export default function HomePage() {
   return (
     <div>
@@ -10,15 +19,15 @@ export default function HomePage() {
           by the same API.
         </p>
         <div className="ctaRow">
-          <a className="btn btnPrimary" href="/calculators">
+          <Link className="btn btnPrimary" href="/calculators">
             Open calculators <span aria-hidden="true">→</span>
-          </a>
-          <a className="btn" href="/widget">
+          </Link>
+          <Link className="btn" href="/widget">
             Embed the widget
-          </a>
-          <a className="btn" href="/docs">
+          </Link>
+          <Link className="btn" href="/docs">
             API docs
-          </a>
+          </Link>
           <span className="pill">
             <span className="mono">/api/calc/*</span> + OpenAPI
           </span>
@@ -56,9 +65,9 @@ export default function HomePage() {
           returns a success response so you can integrate later.
         </p>
         <div className="ctaRow">
-          <a className="btn" href="/calculators#lead">
+          <Link className="btn" href="/calculators#lead">
             Try the lead form
-          </a>
+          </Link>
         </div>
       </section>
     </div>

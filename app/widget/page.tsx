@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Widget",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 async function getBaseUrl() {
   const h = await headers();
@@ -23,9 +33,9 @@ export default async function WidgetPage() {
           <a className="btn" href="/widget/embed" target="_blank" rel="noreferrer">
             Open embed page
           </a>
-          <a className="btn" href="/calculators">
+          <Link className="btn" href="/calculators">
             Calculators
-          </a>
+          </Link>
         </div>
       </section>
 

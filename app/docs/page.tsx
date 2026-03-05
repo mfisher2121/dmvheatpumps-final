@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
+
+export const metadata: Metadata = {
+  title: "API Docs",
+  robots: {
+    index: false,
+    follow: false
+  }
+};
 
 async function getBaseUrl() {
   const h = await headers();
