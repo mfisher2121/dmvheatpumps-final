@@ -7,6 +7,7 @@ type Mode = "sizing" | "savings" | "rebates";
 function getMode(): Mode {
   if (typeof window === "undefined") return "sizing";
   const m = new URL(window.location.href).searchParams.get("mode");
+  if (m === "incentives") return "rebates";
   if (m === "savings" || m === "rebates" || m === "sizing") return m;
   return "sizing";
 }
@@ -53,8 +54,7 @@ export default function WidgetEmbedPage() {
   });
   const [rebates, setRebates] = useState({
     state: "MD",
-    householdIncomeUsd: "125000",
-    hasExistingCentralAc: true
+    utility: "Pepco"
   });
 
   const payload = useMemo(() => {
@@ -86,14 +86,10 @@ export default function WidgetEmbedPage() {
       };
     }
     return {
-      url: "/api/calc/rebates",
-      body: {
-        state: rebates.state,
-        householdIncomeUsd: Number(rebates.householdIncomeUsd),
-        hasExistingCentralAc: Boolean(rebates.hasExistingCentralAc)
-      }
+      url: "/api/incentives",
+      body: null
     };
-  }, [mode, sizing, savings, rebates]);
+  }, [mode, sizing, savings]);
 
   useEffect(() => {
     const sendHeight = () => {
@@ -132,7 +128,7 @@ export default function WidgetEmbedPage() {
           >
             <option value="sizing">Sizing</option>
             <option value="savings">Savings</option>
-            <option value="rebates">Rebates</option>
+            <option value="rebates">Incentives</option>
           </select>
         </div>
       </div>
@@ -249,22 +245,8 @@ export default function WidgetEmbedPage() {
             </select>
           </div>
           <div className="field">
-            <label>Household income ($/yr)</label>
-            <input
-              value={rebates.householdIncomeUsd}
-              inputMode="numeric"
-              onChange={(e) => setRebates((s) => ({ ...s, householdIncomeUsd: e.target.value }))}
-            />
-          </div>
-          <div className="field">
-            <label>Existing central A/C?</label>
-            <select
-              value={rebates.hasExistingCentralAc ? "yes" : "no"}
-              onChange={(e) => setRebates((s) => ({ ...s, hasExistingCentralAc: e.target.value === "yes" }))}
-            >
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
+            <label>Utility</label>
+            <input value={rebates.utility} onChange={(e) => setRebates((s) => ({ ...s, utility: e.target.value }))} />
           </div>
         </div>
       )}
@@ -278,8 +260,20 @@ export default function WidgetEmbedPage() {
             setBusy(true);
             setError(null);
             try {
-              const data = await postJson(payload.url, payload.body);
-              setResultJson(JSON.stringify(data, null, 2));
+              if (mode === "rebates") {
+                const qs = new URLSearchParams({
+                  utility: rebates.utility,
+                  state: rebates.state,
+                  active: "true"
+                });
+                const res = await fetch(`/api/incentives?${qs.toString()}`);
+                const data = (await res.json()) as unknown;
+                if (!res.ok) throw new Error("Request failed");
+                setResultJson(JSON.stringify(data, null, 2));
+              } else {
+                const data = await postJson(payload.url, payload.body);
+                setResultJson(JSON.stringify(data, null, 2));
+              }
             } catch (err) {
               setError(err instanceof Error ? err.message : "Request failed");
               setResultJson(null);

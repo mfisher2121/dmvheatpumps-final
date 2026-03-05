@@ -8,7 +8,16 @@
     "type": "none"
   },
   "tools": {
-    "includeOperationIds": ["health", "calcSizing", "calcSavings", "calcRebates", "createLead", "getOpenApi"]
+    "includeOperationIds": [
+      "health",
+      "calcSizing",
+      "calcSavings",
+      "calcRebates",
+      "createLead",
+      "getIncentives",
+      "createReportRequest",
+      "getOpenApi"
+    ]
   }
 }
 

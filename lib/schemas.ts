@@ -12,7 +12,8 @@ export const SizingRequestSchema = z.object({
 
 export const SizingResponseSchema = z.object({
   estimatedDesignLoadBtuH: z.number(),
-  recommendedCapacityTons: z.number(),
+  recommendedCapacityTonsLow: z.number(),
+  recommendedCapacityTonsHigh: z.number(),
   notes: z.array(z.string())
 });
 
@@ -36,6 +37,7 @@ export const SavingsResponseSchema = z.object({
 
 export const RebateRequestSchema = z.object({
   state: z.enum(["DC", "MD", "VA"]),
+  utility: z.string().min(1).max(120).optional(),
   householdIncomeUsd: z.number().min(0).max(1000000),
   hasExistingCentralAc: z.boolean().default(false)
 });
@@ -50,6 +52,41 @@ export const RebateResponseSchema = z.object({
     })
   ),
   disclaimer: z.string()
+});
+
+export const IncentivesQuerySchema = z.object({
+  state: z.enum(["DC", "MD", "VA"]).optional(),
+  utility: z.string().min(1).max(120),
+  active: z
+    .string()
+    .optional()
+    .transform((v) => (v === undefined ? true : v !== "false"))
+});
+
+export const IncentiveProgramSchema = z.object({
+  id: z.string(),
+  utility: z.string(),
+  state: z.enum(["DC", "MD", "VA"]).nullable().optional(),
+  programName: z.string(),
+  amountUsd: z.number(),
+  notes: z.string().nullable().optional(),
+  sourceUrl: z.string().url().nullable().optional(),
+  updatedAt: z.string().optional()
+});
+
+export const IncentivesResponseSchema = z.object({
+  utility: z.string(),
+  activeOnly: z.boolean(),
+  totalEstimatedUsd: z.number(),
+  programs: z.array(IncentiveProgramSchema),
+  disclaimer: z.string()
+});
+
+export const ReportRequestSchema = z.object({
+  email: z.string().email().max(254),
+  name: z.string().min(1).max(120).optional(),
+  zip: z.string().min(5).max(10).optional(),
+  context: z.record(z.string(), z.unknown()).optional()
 });
 
 export const LeadSchema = z.object({
@@ -72,5 +109,8 @@ export type SavingsRequest = z.infer<typeof SavingsRequestSchema>;
 export type SavingsResponse = z.infer<typeof SavingsResponseSchema>;
 export type RebateRequest = z.infer<typeof RebateRequestSchema>;
 export type RebateResponse = z.infer<typeof RebateResponseSchema>;
+export type IncentivesQuery = z.infer<typeof IncentivesQuerySchema>;
+export type IncentivesResponse = z.infer<typeof IncentivesResponseSchema>;
+export type ReportRequest = z.infer<typeof ReportRequestSchema>;
 export type Lead = z.infer<typeof LeadSchema>;
 

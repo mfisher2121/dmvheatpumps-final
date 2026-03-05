@@ -43,7 +43,7 @@ export default async function WidgetPage() {
         </pre>
         <p className="muted" style={{ marginBottom: 0 }}>
           Modes: <span className="mono">sizing</span>, <span className="mono">savings</span>,{" "}
-          <span className="mono">rebates</span>.
+          <span className="mono">rebates</span> (incentives).
         </p>
       </section>
 

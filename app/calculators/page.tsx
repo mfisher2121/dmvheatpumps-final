@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { IncentivesResponseSchema, SizingResponseSchema } from "@/lib/schemas";
 
 type ApiState<T> =
   | { status: "idle" }
@@ -49,12 +50,14 @@ export default function CalculatorsPage() {
   });
   const [savingsState, setSavingsState] = useState<ApiState<unknown>>({ status: "idle" });
 
-  const [rebate, setRebate] = useState({
+  const [incentives, setIncentives] = useState({
     state: "MD",
-    householdIncomeUsd: "125000",
-    hasExistingCentralAc: true
+    utility: "Pepco"
   });
-  const [rebateState, setRebateState] = useState<ApiState<unknown>>({ status: "idle" });
+  const [incentivesState, setIncentivesState] = useState<ApiState<unknown>>({ status: "idle" });
+
+  const [reportEmail, setReportEmail] = useState("");
+  const [reportState, setReportState] = useState<ApiState<unknown>>({ status: "idle" });
 
   const [lead, setLead] = useState({
     name: "",
@@ -91,14 +94,12 @@ export default function CalculatorsPage() {
     [savings]
   );
 
-  const rebatePayload = useMemo(
-    () => ({
-      state: rebate.state,
-      householdIncomeUsd: Number(rebate.householdIncomeUsd),
-      hasExistingCentralAc: Boolean(rebate.hasExistingCentralAc)
-    }),
-    [rebate]
-  );
+  const sizingParsed = sizingState.status === "ok" ? SizingResponseSchema.safeParse(sizingState.data) : null;
+  const tonHighPlusOne =
+    sizingParsed?.success ? Number((sizingParsed.data.recommendedCapacityTonsHigh + 1.0).toFixed(1)) : null;
+
+  const incentivesParsed =
+    incentivesState.status === "ok" ? IncentivesResponseSchema.safeParse(incentivesState.data) : null;
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
@@ -174,9 +175,16 @@ export default function CalculatorsPage() {
             {sizingState.status === "loading" && <div className="muted">Calculating…</div>}
             {sizingState.status === "error" && <div className="err">Error: {sizingState.error}</div>}
             {sizingState.status === "ok" && (
-              <pre className="mono" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-                {JSON.stringify(sizingState.data, null, 2)}
-              </pre>
+              <div style={{ display: "grid", gap: 10 }}>
+                {tonHighPlusOne !== null && (
+                  <div className="warn" style={{ fontWeight: 700 }}>
+                    Reject quotes above <span className="mono">{tonHighPlusOne} tons</span> unless a Manual J proves it.
+                  </div>
+                )}
+                <pre className="mono" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                  {JSON.stringify(sizingState.data, null, 2)}
+                </pre>
+              </div>
             )}
           </div>
         </form>
@@ -273,59 +281,115 @@ export default function CalculatorsPage() {
       </section>
 
       <section className="panel">
-        <h2 style={{ margin: "0 0 10px", letterSpacing: "-0.3px" }}>3) Rebate estimate (placeholder rules)</h2>
+        <h2 style={{ margin: "0 0 10px", letterSpacing: "-0.3px" }}>3) Incentives (utility + active programs)</h2>
+        <p className="muted" style={{ marginTop: 0 }}>
+          This calls <span className="mono">GET /api/incentives</span> and pulls rows from{" "}
+          <span className="mono">hp_incentive_programs</span> (Supabase).
+        </p>
         <form
           className="form"
           onSubmit={async (e) => {
             e.preventDefault();
-            setRebateState({ status: "loading" });
+            setIncentivesState({ status: "loading" });
             try {
-              const data = await postJson("/api/calc/rebates", rebatePayload);
-              setRebateState({ status: "ok", data });
+              const qs = new URLSearchParams({
+                utility: incentives.utility,
+                state: incentives.state,
+                active: "true"
+              });
+              const res = await fetch(`/api/incentives?${qs.toString()}`);
+              const data = (await res.json()) as unknown;
+              if (!res.ok) throw new Error(getErrorMessage(data));
+              setIncentivesState({ status: "ok", data });
             } catch (err) {
-              setRebateState({ status: "error", error: err instanceof Error ? err.message : "Request failed" });
+              setIncentivesState({ status: "error", error: err instanceof Error ? err.message : "Request failed" });
             }
           }}
         >
           <div className="field">
             <label>State</label>
-            <select value={rebate.state} onChange={(e) => setRebate((s) => ({ ...s, state: e.target.value }))}>
+            <select value={incentives.state} onChange={(e) => setIncentives((s) => ({ ...s, state: e.target.value }))}>
               <option value="DC">DC</option>
               <option value="MD">MD</option>
               <option value="VA">VA</option>
             </select>
           </div>
           <div className="field">
-            <label>Household income ($/yr)</label>
+            <label>Utility</label>
             <input
-              inputMode="numeric"
-              value={rebate.householdIncomeUsd}
-              onChange={(e) => setRebate((s) => ({ ...s, householdIncomeUsd: e.target.value }))}
+              value={incentives.utility}
+              onChange={(e) => setIncentives((s) => ({ ...s, utility: e.target.value }))}
             />
-          </div>
-          <div className="field">
-            <label>Existing central A/C?</label>
-            <select
-              value={rebate.hasExistingCentralAc ? "yes" : "no"}
-              onChange={(e) => setRebate((s) => ({ ...s, hasExistingCentralAc: e.target.value === "yes" }))}
-            >
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
           </div>
           <div className="full actions">
             <button className="btn btnPrimary" type="submit">
-              Estimate rebates
+              Find incentives
             </button>
-            <span className="muted mono">POST /api/calc/rebates</span>
+            <span className="muted mono">GET /api/incentives</span>
           </div>
           <div className="full">
-            {rebateState.status === "loading" && <div className="muted">Calculating…</div>}
-            {rebateState.status === "error" && <div className="err">Error: {rebateState.error}</div>}
-            {rebateState.status === "ok" && (
-              <pre className="mono" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-                {JSON.stringify(rebateState.data, null, 2)}
-              </pre>
+            {incentivesState.status === "loading" && <div className="muted">Searching…</div>}
+            {incentivesState.status === "error" && <div className="err">Error: {incentivesState.error}</div>}
+            {incentivesState.status === "ok" && (
+              <div style={{ display: "grid", gap: 10 }}>
+                {incentivesParsed?.success && (
+                  <div className="ok" style={{ fontWeight: 800 }}>
+                    Estimated total incentives: <span className="mono">${incentivesParsed.data.totalEstimatedUsd}</span>
+                  </div>
+                )}
+                <div className="actions">
+                  <button
+                    className="btn"
+                    type="button"
+                    onClick={async () => {
+                      if (!reportEmail.trim()) {
+                        setReportState({ status: "error", error: "Enter your email to receive the full report." });
+                        return;
+                      }
+                      setReportState({ status: "loading" });
+                      try {
+                        const context = {
+                          sizingPayload,
+                          savingsPayload,
+                          incentives: { ...incentives },
+                          sizingResult: sizingState.status === "ok" ? sizingState.data : null,
+                          savingsResult: savingsState.status === "ok" ? savingsState.data : null,
+                          incentivesResult: incentivesState.data
+                        };
+                        const data = await postJson("/api/report-requests", { email: reportEmail.trim(), context });
+                        setReportState({ status: "ok", data });
+                      } catch (err) {
+                        setReportState({
+                          status: "error",
+                          error: err instanceof Error ? err.message : "Request failed"
+                        });
+                      }
+                    }}
+                  >
+                    Email me the full report
+                  </button>
+                  <input
+                    placeholder="you@example.com"
+                    value={reportEmail}
+                    onChange={(e) => {
+                      setReportEmail(e.target.value);
+                      if (reportState.status === "error") setReportState({ status: "idle" });
+                    }}
+                    style={{ minWidth: 260 }}
+                  />
+                  <span className="muted mono">POST /api/report-requests</span>
+                </div>
+                {reportState.status === "loading" && <div className="muted">Saving…</div>}
+                {reportState.status === "error" && <div className="err">{reportState.error}</div>}
+                {reportState.status === "ok" && (
+                  <pre className="mono" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                    {JSON.stringify(reportState.data, null, 2)}
+                  </pre>
+                )}
+                <pre className="mono" style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                  {JSON.stringify(incentivesState.data, null, 2)}
+                </pre>
+              </div>
             )}
           </div>
         </form>

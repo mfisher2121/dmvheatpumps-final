@@ -49,6 +49,14 @@ export default async function DocsPage() {
             <p>Validated lead capture (optionally stored in Supabase).</p>
           </div>
           <div className="card" style={{ gridColumn: "span 6" }}>
+            <h3 className="mono">GET /api/incentives</h3>
+            <p>Up-to-date incentives by utility (from Supabase table).</p>
+          </div>
+          <div className="card" style={{ gridColumn: "span 6" }}>
+            <h3 className="mono">POST /api/report-requests</h3>
+            <p>Email capture for “send me the full report”.</p>
+          </div>
+          <div className="card" style={{ gridColumn: "span 6" }}>
             <h3 className="mono">GET /api/health</h3>
             <p>Health check.</p>
           </div>
@@ -73,6 +81,8 @@ curl -s ${baseUrl}/api/calc/savings \\
 curl -s ${baseUrl}/api/calc/rebates \\
   -H 'content-type: application/json' \\
   -d '{"state":"MD","householdIncomeUsd":125000,"hasExistingCentralAc":true}' | jq
+
+curl -s "${baseUrl}/api/incentives?utility=Pepco&state=MD&active=true" | jq
 
 curl -s ${baseUrl}/api/openapi`}
         </pre>

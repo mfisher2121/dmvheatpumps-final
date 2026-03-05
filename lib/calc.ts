@@ -9,6 +9,8 @@ export function estimateSizing(input: SizingRequest): SizingResponse {
 
   const designLoad = Math.round(input.conditionedSqft * baseBtuPerSqft * sealingFactor * storyFactor);
   const capacityTons = Math.max(1.5, Math.round(((designLoad / 12000) * 2)) / 2);
+  const low = capacityTons;
+  const high = Number((capacityTons + 0.5).toFixed(1));
 
   const notes: string[] = [
     "This is a quick estimate, not a Manual J.",
@@ -20,7 +22,8 @@ export function estimateSizing(input: SizingRequest): SizingResponse {
 
   return {
     estimatedDesignLoadBtuH: designLoad,
-    recommendedCapacityTons: capacityTons,
+    recommendedCapacityTonsLow: low,
+    recommendedCapacityTonsHigh: high,
     notes
   };
 }
@@ -56,35 +59,12 @@ export function estimateSavings(input: SavingsRequest): SavingsResponse {
 }
 
 export function estimateRebate(input: RebateRequest): RebateResponse {
-  // Placeholder, transparent heuristic. Swap with real program rules later.
-  const programs: RebateResponse["programs"] = [];
-  let total = 0;
-
-  const income = input.householdIncomeUsd;
-  const lowIncome = income > 0 && income < 80000;
-  const midIncome = income >= 80000 && income < 160000;
-
-  if (input.state === "DC") {
-    const amt = lowIncome ? 2500 : midIncome ? 1500 : 500;
-    programs.push({ name: "DC efficiency incentive (estimate)", amountUsd: amt, notes: "Income-based estimate." });
-    total += amt;
-  }
-  if (input.state === "MD") {
-    const amt = input.hasExistingCentralAc ? 1000 : 1500;
-    programs.push({ name: "Maryland heat pump incentive (estimate)", amountUsd: amt });
-    total += amt;
-  }
-  if (input.state === "VA") {
-    const amt = 750;
-    programs.push({ name: "Virginia efficiency incentive (estimate)", amountUsd: amt });
-    total += amt;
-  }
-
+  // Deprecated placeholder: use /api/incentives backed by hp_incentive_programs instead.
   return {
-    estimatedRebateUsd: total,
-    programs,
+    estimatedRebateUsd: 0,
+    programs: [],
     disclaimer:
-      "This is an estimate only. Program names/amounts are placeholders; confirm current eligibility and caps with official program pages."
+      `Deprecated for state=${input.state}. Use GET /api/incentives?utility=... for up-to-date program values.`
   };
 }
 
